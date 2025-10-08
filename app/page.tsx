@@ -47,22 +47,34 @@ export default function Home() {
     try {
       // Cargar datos de prueba directamente
       loadMockupData();
-      return; // Salir temprano ya que estamos en modo mockup
-
-      // El resto del código para conexión real a Supabase
+      // No es necesario el resto del código ya que estamos en modo mockup
+      return;
+      
+      /* Código para conexión real a Supabase (comentado por ahora)
       const hoy = new Date().toISOString().split('T')[0];
-      const { data: pedidos, error } = await supabase
+      
+      // Usar tipo any temporalmente para evitar problemas de tipos
+      const { data, error } = await supabase
         .from('pedidos_diarios')
         .select('tipo, total')
         .eq('fecha', hoy);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching pedidos:', error);
+        throw error;
+      }
 
-      if (pedidos) {
+      // Procesar datos de manera segura
+      if (data) {
+        const pedidos = Array.isArray(data) ? data : [data];
         const totalPedidos = pedidos.length;
-        const totalVentas = pedidos.reduce((sum, p) => sum + Number(p.total), 0);
-        const pedidosLocal = pedidos.filter(p => p.tipo === 'local').length;
-        const pedidosDelivery = pedidos.filter(p => p.tipo === 'delivery').length;
+        const totalVentas = pedidos.reduce((sum, p) => {
+          const total = p?.total ? Number(p.total) : 0;
+          return isNaN(total) ? sum : sum + total;
+        }, 0);
+        
+        const pedidosLocal = pedidos.filter(p => p?.tipo === 'local').length;
+        const pedidosDelivery = pedidos.filter(p => p?.tipo === 'delivery').length;
 
         setResumen({
           total_pedidos: totalPedidos,
@@ -71,6 +83,7 @@ export default function Home() {
           pedidos_delivery: pedidosDelivery,
         });
       }
+      */
     } catch (error) {
       console.error('Error loading resumen:', error);
       // Si hay error, cargar datos de prueba
