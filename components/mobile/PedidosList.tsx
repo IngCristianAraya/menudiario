@@ -37,7 +37,15 @@ export default function PedidosList() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      if (data) setPedidos(data);
+      
+      // Asegurarse de que data sea un array antes de establecer el estado
+      if (data && Array.isArray(data)) {
+        // Hacer un type assertion a Pedido[] ya que sabemos que la estructura coincide
+        setPedidos(data as Pedido[]);
+      } else {
+        // Si data es null o no es un array, establecer un array vacío
+        setPedidos([]);
+      }
     } catch (error) {
       console.error('Error loading pedidos:', error);
     } finally {
