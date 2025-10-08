@@ -2,8 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase, type Pedido } from '@/lib/supabase';
 import { Store, Truck, Clock, Trash2 } from 'lucide-react';
+
+// Definición local de la interfaz Pedido
+type Pedido = {
+  id: string;
+  tipo: string;
+  items: Array<{
+    plato_id: string;
+    nombre: string;
+    precio: number;
+    categoria: string;
+    cantidad: number; // Añadido para manejar la cantidad por ítem
+  }>;
+  total: number;
+  fecha: string;
+  hora: string;
+  cantidad: number;
+  created_at: string;
+  estado: string;
+};
 
 export default function PedidosList() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -27,9 +45,12 @@ export default function PedidosList() {
       
       setPedidos(pedidosHoy as Pedido[]);
       setLoading(false);
-      return; // Salir temprano en modo mockup
+      return; // Usando solo localStorage para el modo demo
 
-      // Código original para conexión con Supabase
+      /* Código de Supabase comentado - Para habilitar:
+      1. Configurar las variables de entorno en Vercel
+      2. Descomentar este bloque
+
       const { data, error } = await supabase
         .from('pedidos_diarios')
         .select('*')
@@ -38,14 +59,12 @@ export default function PedidosList() {
 
       if (error) throw error;
       
-      // Asegurarse de que data sea un array antes de establecer el estado
       if (data && Array.isArray(data)) {
-        // Hacer un type assertion a Pedido[] ya que sabemos que la estructura coincide
         setPedidos(data as Pedido[]);
       } else {
-        // Si data es null o no es un array, establecer un array vacío
         setPedidos([]);
       }
+      */
     } catch (error) {
       console.error('Error loading pedidos:', error);
     } finally {
@@ -71,9 +90,12 @@ export default function PedidosList() {
       // Recargar la página para actualizar los contadores
       window.location.reload();
       
-      return; // Salir temprano en modo mockup
+      return; // Usando solo localStorage para el modo demo
       
-      // Código original para conexión con Supabase
+      /* Código de Supabase comentado - Para habilitar:
+      1. Configurar las variables de entorno en Vercel
+      2. Descomentar este bloque
+      
       const { error } = await supabase
         .from('pedidos_diarios')
         .delete()
@@ -82,6 +104,7 @@ export default function PedidosList() {
       if (error) throw error;
 
       setPedidos((prev) => prev.filter((p) => p.id !== id));
+      */
     } catch (error) {
       console.error('Error deleting pedido:', error);
       alert('Error al eliminar el pedido');
