@@ -1,24 +1,55 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Plus, ClipboardList } from 'lucide-react';
+import { getSession } from 'next-auth/react';
+import { Home, Plus, ClipboardList, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const navItems = [
-  { href: '/', icon: Home, label: 'Inicio' },
-  { href: '/nuevo-pedido', icon: Plus, label: 'Nuevo', primary: true },
-  { href: '/pedidos-hoy', icon: ClipboardList, label: 'Pedidos' },
-];
+function getNavItems(showAdmin: boolean) {
+  const items = [
+    { href: '/', icon: Home, label: 'Inicio' },
+    { href: '/nuevo-pedido', icon: Plus, label: 'Nuevo', primary: true },
+    { href: '/pedidos-hoy', icon: ClipboardList, label: 'Pedidos' },
+  ];
+  if (showAdmin) {
+    items.push({ href: '/admin/dashboard', icon: Settings, label: 'Admin' });
+  }
+  return items;
+}
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const initialShowAdmin = process.env.NEXT_PUBLIC_SHOW_ADMIN_CTA === 'true';
+  const [showAdmin, setShowAdmin] = React.useState<boolean>(initialShowAdmin);
+  const [hasAdminRole, setHasAdminRole] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    try {
+      const val = localStorage.getItem('showAdminCTA');
+      if (val === 'true' || val === 'false') {
+        setShowAdmin(val === 'true');
+      }
+    } catch {}
+  }, []);
+
+  React.useEffect(() => {
+    // Obtener sesión de NextAuth sin necesitar SessionProvider
+    getSession().then((session) => {
+      const role = (session?.user as any)?.role as string | undefined;
+      setHasAdminRole(role === 'admin' || role === 'owner');
+    }).catch(() => {
+      setHasAdminRole(false);
+    });
+  }, []);
+  const showAdminCTA = hasAdminRole || showAdmin;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-200 safe-bottom z-50">
       <div className="max-w-[430px] mx-auto px-4">
         <div className="flex items-center justify-around py-2">
-          {navItems.map((item) => {
+          {getNavItems(showAdminCTA).map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
 
