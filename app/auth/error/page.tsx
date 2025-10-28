@@ -47,9 +47,9 @@ export default function ErrorPage() {
           </Link>
           
           <p className="text-center text-sm text-gray-600">
-            ¿Neitas ayuda?{' '}
+            ¿Necesitas ayuda?{' '}
             <a
-              href="mailto:soporte@tudominio.com"
+              href="mailto:soporte@tubarrio.pe"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               Contáctanos

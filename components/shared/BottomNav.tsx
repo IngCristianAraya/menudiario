@@ -24,6 +24,7 @@ export default function BottomNav() {
   const initialShowAdmin = process.env.NEXT_PUBLIC_SHOW_ADMIN_CTA === 'true';
   const [showAdmin, setShowAdmin] = React.useState<boolean>(initialShowAdmin);
   const [hasAdminRole, setHasAdminRole] = React.useState<boolean>(false);
+  const [loadedFromConfig, setLoadedFromConfig] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     try {
@@ -42,6 +43,28 @@ export default function BottomNav() {
     }).catch(() => {
       setHasAdminRole(false);
     });
+  }, []);
+
+  React.useEffect(() => {
+    // Intentar cargar configuración del tenant para decidir visibilidad del CTA Admin
+    // Respeta localStorage si el usuario lo fijó manualmente
+    (async () => {
+      try {
+        const res = await fetch('/api/tenant/config', { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        const cfg = json?.config as { show_admin_cta?: boolean } | undefined;
+        const localVal = typeof window !== 'undefined' ? localStorage.getItem('showAdminCTA') : null;
+        const localDefined = localVal === 'true' || localVal === 'false';
+        if (!localDefined && typeof cfg?.show_admin_cta === 'boolean') {
+          setShowAdmin(cfg.show_admin_cta);
+        }
+        setLoadedFromConfig(true);
+      } catch {
+        // ignorar errores y mantener defaults/env/localStorage
+        setLoadedFromConfig(true);
+      }
+    })();
   }, []);
   const showAdminCTA = hasAdminRole || showAdmin;
 

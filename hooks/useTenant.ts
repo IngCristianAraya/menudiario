@@ -40,8 +40,8 @@ export function useTenant() {
           const host = window.location.hostname;
           const subdomain = host.split('.')[0];
           
-          // Si no hay subdominio, redirigir a la página principal
-          if (host === 'tudominio.com' || host === 'localhost') {
+          // Si no hay subdominio, simplemente continuar sin redirección forzada
+          if (host === 'localhost') {
             setLoading(false);
             return;
           }
@@ -88,10 +88,7 @@ export function useTenant() {
       } catch (err) {
         console.error('Error al cargar el tenant:', err);
         setError(err instanceof Error ? err : new Error('Error desconocido'));
-        // Redirigir a la página principal si hay un error
-        if (window.location.hostname !== 'tudominio.com' && window.location.hostname !== 'localhost') {
-          window.location.href = 'https://tudominio.com';
-        }
+        // No forzar redirecciones a dominios placeholder; mostrar error/controlar estado
       } finally {
         setLoading(false);
       }
@@ -118,8 +115,14 @@ export function useTenant() {
       // Establecer cookie del tenant
       document.cookie = `tenant-id=${tenantId}; path=/; max-age=31536000; samesite=lax`;
       
-      // Redirigir al subdominio del tenant
-      window.location.href = `https://${tenantData.subdominio}.tudominio.com`;
+      // Redirigir al subdominio del tenant si existe dominio raíz configurado
+      const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
+      if (rootDomain) {
+        window.location.href = `https://${tenantData.subdominio}.${rootDomain}`;
+      } else {
+        // Fallback: recargar la página actual para aplicar el cambio de cookie
+        window.location.href = '/';
+      }
       
       return true;
     } catch (err) {
