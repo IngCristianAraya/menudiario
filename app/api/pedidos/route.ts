@@ -126,13 +126,13 @@ export async function GET(request: Request) {
     }
 
     // Filtrar por estado si se proporciona
-    const estado = searchParams.get('estado');
+    const estado = searchParams?.get('estado');
     if (estado) {
       query = query.eq('estado', estado);
     }
 
     // Filtrar por fecha si se proporciona
-    const fecha = searchParams.get('fecha');
+    const fecha = searchParams?.get('fecha');
     if (fecha) {
       const fechaInicio = new Date(fecha);
       fechaInicio.setHours(0, 0, 0, 0);

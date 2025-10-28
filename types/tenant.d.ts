@@ -24,23 +24,5 @@ declare namespace Tenant {
   }
 }
 
-declare module 'next' {
-  interface NextApiRequest {
-    tenant?: Tenant.Tenant;
-    user?: {
-      id: string;
-      email: string;
-      role: string;
-    };
-  }
-}
-
-declare module 'next/headers' {
-  interface Headers {
-    get(name: 'x-tenant-id'): string | null;
-    get(name: 'x-tenant-name'): string | null;
-    get(name: 'x-tenant-schema'): string | null;
-    get(name: 'x-user-id'): string | null;
-    get(name: 'x-user-role'): string | null;
-  }
-}
+// Nota: Las rutas usan Request/NextResponse del App Router; no es necesario
+// sobrescribir tipos del módulo 'next' ni de 'next/headers'.

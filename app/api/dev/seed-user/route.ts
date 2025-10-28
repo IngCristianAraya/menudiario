@@ -21,6 +21,7 @@ export async function GET() {
 
   const email = 'admin@ejemplo.com';
   const password = 'admin123';
+  let userData = null;
 
   try {
     // Primero intentar crear el usuario
@@ -77,6 +78,9 @@ export async function GET() {
       }
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
+
+    // Si llegamos aquí, el usuario se creó exitosamente
+    userData = data;
   } catch (err: any) {
     return NextResponse.json({ 
       ok: false, 
@@ -84,5 +88,5 @@ export async function GET() {
     }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, email, password, user_id: data?.user?.id || null });
+  return NextResponse.json({ ok: true, email, password, user_id: userData?.user?.id || null });
 }

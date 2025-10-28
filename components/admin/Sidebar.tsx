@@ -25,7 +25,7 @@ export function AdminSidebar() {
           <div className="flex flex-col flex-grow mt-5">
             <nav className="flex-1 px-2 space-y-1 bg-white">
               {navigation.map((item) => {
-                const isActive = pathname.startsWith(item.href);
+                const isActive = !!pathname && pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.name}

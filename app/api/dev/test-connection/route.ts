@@ -14,7 +14,7 @@ export async function GET() {
       url_value: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...',
       key_length: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
     },
-    tests: []
+    tests: [] as Array<{ test: string; ok: boolean; [key: string]: any; }>
   };
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
