@@ -31,15 +31,24 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const router = useRouter();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Inicialización perezosa del cliente Supabase solo en el navegador
+  const [supabase] = useState<any | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    return createBrowserClient(url, key);
+  });
 
   useEffect(() => {
     const fetchTenant = async () => {
       try {
         setLoading(true);
+        if (!supabase) {
+          // No hay cliente disponible en SSR o faltan env vars; salir sin error duro
+          setLoading(false);
+          return;
+        }
         
         // Obtener el tenant del subdominio
         const host = window.location.hostname;
@@ -87,12 +96,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     };
 
     fetchTenant();
-  }, [router]);
+  }, [router, supabase]);
 
   // Función para cambiar de tenant (útil para el panel de administración)
   const switchTenant = async (tenantId: string): Promise<boolean> => {
     try {
       setLoading(true);
+      if (!supabase) {
+        setError(new Error('Supabase no está disponible'));
+        return false;
+      }
       
       const { data: tenantData, error } = await supabase
         .from('tenants')

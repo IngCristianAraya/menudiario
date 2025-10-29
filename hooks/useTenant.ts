@@ -1,5 +1,6 @@
+"use client";
+
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { createBrowserClient } from '@supabase/ssr';
 
 type TenantConfig = {
@@ -18,13 +19,20 @@ export function useTenant() {
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const router = useRouter();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Inicialización perezosa para evitar SSR
+  const [supabase] = useState<any | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    return createBrowserClient(url, key);
+  });
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
     // Obtener el tenant del contexto del servidor (middleware)
     const tenantId = document.cookie
       .split('; ')
@@ -118,12 +126,16 @@ export function useTenant() {
     };
 
     fetchTenant();
-  }, [router.asPath]);
+  }, [supabase]);
 
   // Función para cambiar de tenant (útil para el panel de administración)
   const switchTenant = async (tenantId: string) => {
     try {
       setLoading(true);
+      if (!supabase) {
+        setError(new Error('Supabase no está disponible'));
+        return false;
+      }
       
       const { data: tenantData, error } = await supabase
         .from('tenants')
