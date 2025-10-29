@@ -29,12 +29,12 @@ declare namespace NodeJS {
 }
 
 // Crear el cliente de Supabase bajo demanda para evitar errores en build/prerender
-function getSupabaseAdmin() {
+function getSupabaseAdmin(): any | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !service) {
     // En entorno de build/prerender estas variables pueden no existir; devolvemos null
-    return null as ReturnType<typeof createClient> | null;
+    return null;
   }
   return createClient(url, service, {
     auth: {
@@ -42,11 +42,11 @@ function getSupabaseAdmin() {
       persistSession: false,
       detectSessionInUrl: false,
     },
-  });
+  }) as any;
 }
 
 // Fallback: buscar tenant directamente en la tabla con diferentes combinaciones de columnas
-async function findTenantBySlugOrSubdomain(supabase: ReturnType<typeof createClient> | null, sub: string): Promise<Tenant | null> {
+async function findTenantBySlugOrSubdomain(supabase: any | null, sub: string): Promise<Tenant | null> {
   if (!supabase) return null;
   const combos = [
     { subCol: 'slug', activeCol: 'is_active', nameCol: 'name' },
