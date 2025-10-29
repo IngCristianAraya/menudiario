@@ -54,25 +54,23 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         }
         
         const subdomain = hostParts[0];
-        
-        // Obtener el tenant por subdominio
-        const { data: tenantData, error: tenantError } = await supabase
-          .from('tenants')
-          .select('*')
-          .eq('subdominio', subdomain)
-          .eq('activo', true)
-          .single();
 
-        if (tenantError || !tenantData) {
+        // Obtener el tenant por RPC segura (SECURITY DEFINER)
+        const { data: tenantDataArr, error: tenantError } = await supabase
+          .rpc('get_tenant_by_subdomain', { p_subdomain: subdomain });
+
+        if (tenantError || !tenantDataArr || (Array.isArray(tenantDataArr) && tenantDataArr.length === 0)) {
           throw new Error('Tenant no encontrado o inactivo');
         }
-        
+
+        const tenantData = Array.isArray(tenantDataArr) ? tenantDataArr[0] : tenantDataArr;
+
         setTenant({
-          id: tenantData.id,
-          nombre: tenantData.nombre,
-          subdominio: tenantData.subdominio,
-          configuracion: tenantData.configuracion || {},
-          activo: tenantData.activo
+          id: (tenantData as any).id,
+          nombre: (tenantData as any).name ?? (tenantData as any).nombre ?? 'Tenant',
+          subdominio: (tenantData as any).subdomain ?? (tenantData as any).subdominio ?? subdomain,
+          configuracion: (tenantData as any).config ?? (tenantData as any).configuracion ?? {},
+          activo: (tenantData as any).is_active ?? (tenantData as any).activo ?? true,
         });
         
         // Establecer cookie del tenant

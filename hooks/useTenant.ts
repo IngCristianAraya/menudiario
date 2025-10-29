@@ -47,23 +47,46 @@ export function useTenant() {
           }
           
           // Obtener el tenant por subdominio
-          const { data: tenantData, error: tenantError } = await supabase
+          // 1) Intentar esquema con 'slug' (muchas instancias lo usan)
+          const { data: tenantDataSlug, error: tenantErrorSlug } = await supabase
             .from('tenants')
             .select('*')
-            .eq('subdominio', subdomain)
-            .eq('activo', true)
+            .eq('slug', subdomain)
+            .eq('is_active', true)
             .single();
 
-          if (tenantError || !tenantData) {
+          // 2) Intentar esquema en inglés (name, subdomain, is_active, config)
+          const { data: tenantDataEn, error: tenantErrorEn } = tenantDataSlug
+            ? { data: null as any, error: null as any }
+            : await supabase
+                .from('tenants')
+                .select('*')
+                .eq('subdomain', subdomain)
+                .eq('is_active', true)
+                .single();
+
+          // 3) Si falla, intentar esquema en español (nombre, subdominio, activo, configuracion)
+          const tenantData = tenantDataSlug ?? tenantDataEn ?? (await (async () => {
+            const { data, error } = await supabase
+              .from('tenants')
+              .select('*')
+              .eq('subdominio', subdomain)
+              .eq('activo', true)
+              .single();
+            if (error) return null;
+            return data ?? null;
+          })());
+
+          if ((tenantErrorEn && !tenantData) || !tenantData) {
             throw new Error('Tenant no encontrado');
           }
-          
+
           setTenant({
             id: tenantData.id,
-            nombre: tenantData.nombre,
-            subdominio: tenantData.subdominio,
-            configuracion: tenantData.configuracion || {},
-            activo: tenantData.activo
+            nombre: (tenantData as any).nombre ?? (tenantData as any).name,
+            subdominio: (tenantData as any).subdominio ?? (tenantData as any).subdomain ?? (tenantData as any).slug ?? '',
+            configuracion: (tenantData as any).configuracion ?? (tenantData as any).config ?? {},
+            activo: (tenantData as any).activo ?? (tenantData as any).is_active
           });
         } else {
           // Obtener el tenant por ID
@@ -79,10 +102,10 @@ export function useTenant() {
           
           setTenant({
             id: tenantData.id,
-            nombre: tenantData.nombre,
-            subdominio: tenantData.subdominio,
-            configuracion: tenantData.configuracion || {},
-            activo: tenantData.activo
+            nombre: (tenantData as any).nombre ?? (tenantData as any).name,
+            subdominio: (tenantData as any).subdominio ?? (tenantData as any).subdomain ?? (tenantData as any).slug ?? '',
+            configuracion: (tenantData as any).configuracion ?? (tenantData as any).config ?? {},
+            activo: (tenantData as any).activo ?? (tenantData as any).is_active
           });
         }
       } catch (err) {
@@ -117,8 +140,9 @@ export function useTenant() {
       
       // Redirigir al subdominio del tenant si existe dominio raíz configurado
       const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
-      if (rootDomain) {
-        window.location.href = `https://${tenantData.subdominio}.${rootDomain}`;
+      const subd = (tenantData as any).subdominio ?? (tenantData as any).subdomain ?? (tenantData as any).slug;
+      if (rootDomain && subd) {
+        window.location.href = `https://${subd}.${rootDomain}`;
       } else {
         // Fallback: recargar la página actual para aplicar el cambio de cookie
         window.location.href = '/';

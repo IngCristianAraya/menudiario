@@ -253,6 +253,21 @@ Este proyecto está bajo la licencia MIT.
 2. Corregir `app/api/auth/register`: usar `signUp` de Supabase, insertar en `profiles` (`first_name`, `last_name`, `avatar_url`) y crear registro en `tenant_users` con rol.
 3. Migrar endpoints de `app/api/pedidos` a `orders`/`order_items` y `products`; actualizar estados, filtros y RLS.
 4. Sustituir el `isAdmin` hardcodeado por verificación de rol desde `tenant_users` (en middleware/SSR); añadir headers `x-user-role` confiables.
+
+---
+
+## Verificación y visualización de tenants (desarrollo)
+
+- Servidor dev: `http://localhost:3001/`.
+- Dominio raíz local: `NEXT_PUBLIC_ROOT_DOMAIN=lvh.me`.
+- Cómo probar un tenant:
+  - Insertar el tenant en Supabase (usa `scripts/seed_tenant_lasazoncriolla.sql`).
+  - Abrir `http://<subdomain>.lvh.me:3001` (ej. `lasazoncriollamenu.lvh.me:3001`).
+  - Validar `GET /api/tenant/config` devuelve `{ subdomain, url, anonKey }`.
+- Compatibilidad de esquema en `tenants`:
+  - El frontend prueba primero columnas en inglés (`name`, `subdomain`, `is_active`, `config`).
+  - Si no están, cae a español (`nombre`, `subdominio`, `activo`, `configuracion`).
+
 5. Conectar el Dashboard a datos reales: métricas de `orders` por día, usuarios por tenant, ingresos mensuales.
 6. Implementar gestión de tenants en admin: crear/activar/inactivar y asignar usuarios.
 7. Crear vistas admin para `usuarios`, `productos`, `configuracion` con CRUD básico.

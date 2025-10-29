@@ -1,0 +1,41 @@
+{
+  "tenant": {
+    "subdomain": "lasazoncriollamenu",
+    "key": "slug",
+    "name": "La sazón criolla",
+    "id": "3bdf61e0-6a4f-41ce-a30b-2003e925c83e"
+  },
+  "restaurant": {
+    "slug": "lasazoncriollamenu",
+    "email_key": "email_contacto",
+    "id": "fec3f3e2-b1cc-4c2a-a4fd-cad53bde175f"
+  },
+  "urls": {
+    "login": "https://lasazoncriollamenu.tubarrio.pe/auth/login",
+    "panel": "https://lasazoncriollamenu.tubarrio.pe/admin/dashboard"
+  },
+  "users": [
+    {
+      "email": "admin@lasazoncriolla.com",
+      "role": "admin",
+      "password": "AdminPass123!",
+      "id": "6751c82e-adee-4a2d-8444-df1b3df7b808"
+    },
+    {
+      "email": "staff1@lasazoncriollamenu.tubarrio.pe",
+      "role": "staff",
+      "password": "HVvJFnKXqFux$f",
+      "id": "3b5b3245-844d-4eaa-a3cc-f9ecc0b2d4a6"
+    },
+    {
+      "email": "staff2@lasazoncriollamenu.tubarrio.pe",
+      "role": "staff",
+      "password": "Gne6amxrVY^oU%",
+      "id": "953cdfba-ebd0-45bf-8874-b8969bd5b611"
+    }
+  ],
+  "notes": [
+    "Use las credenciales para primer inicio de sesión",
+    "Cambie contraseñas en el panel de administración"
+  ]
+}

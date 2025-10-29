@@ -40,6 +40,40 @@ const supabase = createClient(
   }
 );
 
+// Fallback: buscar tenant directamente en la tabla con diferentes combinaciones de columnas
+async function findTenantBySlugOrSubdomain(sub: string): Promise<Tenant | null> {
+  const combos = [
+    { subCol: 'slug', activeCol: 'is_active', nameCol: 'name' },
+    { subCol: 'slug', activeCol: 'activo', nameCol: 'nombre' },
+    { subCol: 'subdomain', activeCol: 'is_active', nameCol: 'name' },
+    { subCol: 'subdominio', activeCol: 'activo', nameCol: 'nombre' },
+  ] as const;
+
+  for (const c of combos) {
+    const selectCols = `id, ${c.subCol}, ${c.nameCol}, ${c.activeCol}`;
+    const { data } = await supabase
+      .from('tenants')
+      .select(selectCols)
+      .eq(c.subCol, sub)
+      .maybeSingle();
+
+    const row = data as any;
+    if (row && row.id) {
+      const isActiveRaw = row[c.activeCol];
+      const isActive = typeof isActiveRaw === 'boolean' ? isActiveRaw : Boolean(isActiveRaw ?? true);
+      const name = row[c.nameCol] ?? row['name'] ?? 'Tenant';
+      const subdomainOrSlug = row[c.subCol] ?? sub;
+      return {
+        id: row.id as string,
+        name,
+        subdomain: String(subdomainOrSlug),
+        is_active: isActive,
+      };
+    }
+  }
+  return null;
+}
+
 const publicPaths = [
   '/auth/login',
   '/auth/register',
@@ -60,6 +94,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/_next') || 
     pathname.startsWith('/static') || 
     pathname.startsWith('/api/auth') ||
+    // Permitir leer configuración de tenant sin autenticación
+    pathname.startsWith('/api/tenant/config') ||
     pathname.includes('.')
   ) {
     return NextResponse.next();
@@ -70,8 +106,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2.1 Permitir endpoints de desarrollo en localhost
-  if (isLocalhost && pathname.startsWith('/api/dev')) {
+  // 2.1 Permitir endpoints de desarrollo en cualquier host cuando no es producción
+  if (process.env.NODE_ENV !== 'production' && pathname.startsWith('/api/dev')) {
     return NextResponse.next();
   }
 
@@ -96,10 +132,18 @@ export async function middleware(request: NextRequest) {
       requestHeaders.set('x-tenant-schema', `tenant_${devTenantId.replace(/-/g, '_')}`);
       requestHeaders.set('x-tenant-name', devTenantName);
     } else {
-      console.error('Tenant no encontrado o inactivo:', subdomain);
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('error', 'TenantNotFound');
-      return NextResponse.redirect(loginUrl);
+      // Fallback adicional: intentar buscar por slug/subdominio directamente
+      const fallbackTenant = await findTenantBySlugOrSubdomain(subdomain);
+      if (fallbackTenant && fallbackTenant.is_active) {
+        requestHeaders.set('x-tenant-id', fallbackTenant.id);
+        requestHeaders.set('x-tenant-schema', `tenant_${fallbackTenant.id.replace(/-/g, '_')}`);
+        requestHeaders.set('x-tenant-name', fallbackTenant.name);
+      } else {
+        console.error('Tenant no encontrado o inactivo:', subdomain);
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('error', 'TenantNotFound');
+        return NextResponse.redirect(loginUrl);
+      }
     }
   } else {
     // 4. Configurar headers del tenant

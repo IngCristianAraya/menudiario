@@ -1,0 +1,53 @@
+{
+  "tenant": {
+    "id": "274fb102-e88c-4466-943e-19a2b8aac4c2",
+    "key": "slug",
+    "subdomain": "thepointmenu",
+    "name": "The Point"
+  },
+  "restaurant": {
+    "id": "e04d4c2b-44ae-43c3-a5d2-46bc985f8ae1",
+    "email_key": "email_contacto",
+    "slug": "thepointmenu"
+  },
+  "urls": {
+    "panel": "https://thepointmenu.tubarrio.pe/admin/dashboard",
+    "login": "https://thepointmenu.tubarrio.pe/auth/login"
+  },
+  "users": [
+    {
+      "id": "eaef49b0-b44f-4cba-8118-e7df32137485",
+      "password": "Admin1234!",
+      "email": "admin@thepoint.com",
+      "role": "admin"
+    },
+    {
+      "id": "b79d89e2-b8d1-488a-8795-964977902370",
+      "password": "Ukvre4nUXZ*Pfc",
+      "email": "staff1@thepointmenu.tubarrio.pe",
+      "role": "staff"
+    },
+    {
+      "id": "21747a7c-c731-467f-b321-bf997cd4ca6a",
+      "password": "BR3p*&m!VxX*w5",
+      "email": "staff2@thepointmenu.tubarrio.pe",
+      "role": "staff"
+    },
+    {
+      "id": "a6ae3832-d96f-4775-8f4f-0b5bb33c206b",
+      "password": "PP6716K%N9z1rG",
+      "email": "staff3@thepointmenu.tubarrio.pe",
+      "role": "staff"
+    },
+    {
+      "id": "517333b7-000c-4ea1-943c-c90e17b83c4c",
+      "password": "!0*px0qI@SPOD8",
+      "email": "staff4@thepointmenu.tubarrio.pe",
+      "role": "staff"
+    }
+  ],
+  "notes": [
+    "Use las credenciales para primer inicio de sesión",
+    "Cambie contraseñas en el panel de administración"
+  ]
+}

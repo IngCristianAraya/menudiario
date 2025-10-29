@@ -8,7 +8,7 @@ export type TenantSecrets = {
 
 export function extractSubdomainFromHost(host?: string, rootDomain?: string): string | null {
   if (!host) return null
-  const cleanHost = host.toLowerCase()
+  const cleanHost = host.toLowerCase().split(':')[0]
   const domain = (rootDomain || process.env.NEXT_PUBLIC_ROOT_DOMAIN || '').toLowerCase()
   if (!domain) return null
   if (cleanHost === domain || cleanHost === `www.${domain}`) return 'menudiario'

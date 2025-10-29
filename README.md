@@ -94,3 +94,25 @@ alter table pedidos enable row level security;
 - `build`: Construye la aplicación para producción
 - `start`: Inicia el servidor de producción
 - `lint`: Ejecuta el linter
+## Estado actual y cómo funciona (multitenant)
+
+- Entorno de desarrollo: servidor activo en `http://localhost:3001/`.
+- Dominio raíz local: `NEXT_PUBLIC_ROOT_DOMAIN=lvh.me` para simular subdominios (`*.lvh.me` → `127.0.0.1`).
+- Resolución de tenant:
+  - Se obtiene el subdominio desde el `host` (ej. `lasazoncriollamenu.lvh.me`).
+  - El frontend consulta la tabla `public.tenants`.
+  - El código soporta ambos esquemas de columnas:
+    - Inglés: `name`, `subdomain`, `is_active`, `config`.
+    - Español: `nombre`, `subdominio`, `activo`, `configuracion`.
+- Credenciales de Supabase por tenant: si existen variables `SUPABASE_URL__<subdomain>`, `SUPABASE_ANON_KEY__<subdomain>`, se usan; si no, se hace fallback a las globales `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+### Visualizar un tenant
+
+1. Crear el tenant en Supabase (si no existe): usa `scripts/seed_tenant_lasazoncriolla.sql` en el SQL Editor.
+2. Abrir `http://lasazoncriollamenu.lvh.me:3001` para probar el subdominio local.
+3. Verificar por API: `GET /api/tenant/config` debe devolver `{ subdomain, url, anonKey }`.
+
+### Notas
+
+- El frontend se actualizó para ser tolerante a esquemas mixtos en `tenants`.
+- Si cambias de esquema, mantén al menos `subdomain`/`subdominio` y estado `is_active`/`activo`.
