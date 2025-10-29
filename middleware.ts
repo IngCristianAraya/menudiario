@@ -28,20 +28,26 @@ declare namespace NodeJS {
   }
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+// Crear el cliente de Supabase bajo demanda para evitar errores en build/prerender
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !service) {
+    // En entorno de build/prerender estas variables pueden no existir; devolvemos null
+    return null as ReturnType<typeof createClient> | null;
+  }
+  return createClient(url, service, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
       detectSessionInUrl: false,
     },
-  }
-);
+  });
+}
 
 // Fallback: buscar tenant directamente en la tabla con diferentes combinaciones de columnas
-async function findTenantBySlugOrSubdomain(sub: string): Promise<Tenant | null> {
+async function findTenantBySlugOrSubdomain(supabase: ReturnType<typeof createClient> | null, sub: string): Promise<Tenant | null> {
+  if (!supabase) return null;
   const combos = [
     { subCol: 'slug', activeCol: 'is_active', nameCol: 'name' },
     { subCol: 'slug', activeCol: 'activo', nameCol: 'nombre' },
@@ -88,6 +94,7 @@ export async function middleware(request: NextRequest) {
   const hostParts = host.split('.');
   const isSubdomain = hostParts.length > (isLocalhost ? 1 : 2);
   const subdomain = isSubdomain ? hostParts[0].toLowerCase() : 'default';
+  const supabase = getSupabaseAdmin();
 
   // 1. Ignorar archivos estáticos y rutas de API de autenticación
   if (
@@ -113,10 +120,16 @@ export async function middleware(request: NextRequest) {
 
   // 3. Obtener información del tenant
   let skipTenantVerification = false;
-  const { data: tenantData, error: tenantError } = await supabase
-    .rpc('get_tenant_by_subdomain', { 
-      p_subdomain: subdomain 
-    });
+  let tenantData: any = null;
+  let tenantError: any = null;
+  if (supabase) {
+    const { data, error } = await supabase
+      .rpc('get_tenant_by_subdomain', { 
+        p_subdomain: subdomain 
+      });
+    tenantData = data;
+    tenantError = error;
+  }
   
   const tenant = tenantData as unknown as Tenant | null;
 
@@ -133,7 +146,7 @@ export async function middleware(request: NextRequest) {
       requestHeaders.set('x-tenant-name', devTenantName);
     } else {
       // Fallback adicional: intentar buscar por slug/subdominio directamente
-      const fallbackTenant = await findTenantBySlugOrSubdomain(subdomain);
+      const fallbackTenant = await findTenantBySlugOrSubdomain(supabase, subdomain);
       if (fallbackTenant && fallbackTenant.is_active) {
         requestHeaders.set('x-tenant-id', fallbackTenant.id);
         requestHeaders.set('x-tenant-schema', `tenant_${fallbackTenant.id.replace(/-/g, '_')}`);
@@ -176,11 +189,19 @@ export async function middleware(request: NextRequest) {
     // Verificar acceso al tenant sólo si no estamos en modo dev sin tenant
     const userId = (session?.user?.id as string) || (nextAuthToken?.sub as string) || '';
     if (!skipTenantVerification && tenant?.id) {
-      const { data: userTenantData, error: accessError } = await supabase
-        .rpc('check_user_tenant_access', {
-          p_user_id: userId,
-          p_tenant_id: tenant.id,
-        });
+      let userTenantData: any = null;
+      let accessError: any = null;
+      if (supabase) {
+        const { data, error } = await supabase
+          .rpc('check_user_tenant_access', {
+            p_user_id: userId,
+            p_tenant_id: tenant.id,
+          });
+        userTenantData = data;
+        accessError = error;
+      } else {
+        accessError = new Error('Supabase no configurado');
+      }
       
       const userTenant = userTenantData as unknown as UserTenantAccess | null;
   
