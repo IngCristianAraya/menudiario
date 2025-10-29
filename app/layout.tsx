@@ -6,6 +6,10 @@ import BottomNav from '@/components/shared/BottomNav';
 
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'] });
 
+// Evitar prerender/SSG en build: fuerza renderizado dinámico del árbol
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: 'Pedidos Diarios',
   description: 'Sistema de gestión de pedidos para tu negocio',
