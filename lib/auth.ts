@@ -2,17 +2,21 @@ import { NextAuthOptions, getServerSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
+// Evitar inicializar el cliente en ámbito de módulo. Crear bajo demanda.
+function getSupabaseAnon() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    throw new Error('Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+  return createClient(url, anon, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
       detectSessionInUrl: false,
     },
-  }
-);
+  });
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -27,6 +31,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email y contraseña son requeridos');
         }
 
+        const supabase = getSupabaseAnon();
         const { data: { user }, error } = await supabase.auth.signInWithPassword({
           email: credentials.email,
           password: credentials.password,

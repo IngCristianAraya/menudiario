@@ -1,9 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Nota: no crear el cliente en ámbito de módulo para evitar fallos en build
+// cuando faltan variables de entorno. Usar fábrica perezosa en cliente.
+let browserClient: ReturnType<typeof createClient> | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export function getSupabaseBrowserClient() {
+  if (typeof window === 'undefined') {
+    throw new Error('getSupabaseBrowserClient sólo puede usarse en el navegador');
+  }
+  if (!browserClient) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anon) {
+      throw new Error('Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    }
+    browserClient = createClient(url, anon);
+  }
+  return browserClient;
+}
 
 export type Categoria = 'entrada' | 'segundo' | 'bebida';
 

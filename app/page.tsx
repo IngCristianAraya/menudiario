@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { supabase, type ResumenDiario } from '@/lib/supabase';
+import type { ResumenDiario } from '@/lib/supabase';
 import DashboardCards from '@/components/mobile/DashboardCards';
 import { Calendar, TrendingUp } from 'lucide-react';
 

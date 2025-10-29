@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !service) {
+    throw new Error('Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY')
+  }
+  return createClient(url, service, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
       detectSessionInUrl: false,
     },
-  }
-)
+  })
+}
 
 export async function POST(request: Request) {
   try {
@@ -25,6 +28,7 @@ export async function POST(request: Request) {
       )
     }
 
+    const supabase = getSupabaseAdmin()
     // Registrar al usuario en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
